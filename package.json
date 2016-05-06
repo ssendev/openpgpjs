@@ -53,6 +53,7 @@
     "grunt-saucelabs": "8.6.2",
     "grunt-text-replace": "~0.4.0",
     "istanbul": "~0.4.1",
+    "js-string-escape": "^1.0.1",
     "mocha": "~2.3.4",
     "rusha": "^0.8.3",
     "sinon": "^1.17.3",

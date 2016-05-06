@@ -27,6 +27,7 @@ module.exports = function(grunt) {
 
   var version = grunt.option('release');
   var fs = require('fs');
+  var jsStringEscape = require('js-string-escape');
   var browser_capabilities;
 
   if (process.env.SELENIUM_BROWSER_CAPABILITIES !== undefined) {
@@ -294,8 +295,24 @@ module.exports = function(grunt) {
     fs.writeFileSync(path, JSON.stringify(file, null, 2) + '\n');
   }
 
+  grunt.registerTask('include_worker', function() {
+    var banner = /^(\/\*.*\*\/)/,
+      pgp = fs.readFileSync('dist/openpgp.min.js').toString().replace(banner, ''),
+      worker = fs.readFileSync('dist/openpgp.worker.min.js').toString().replace(banner, ''),
+      file = RegExp.$1 + '!function(){\nvar pgp="' + jsStringEscape(pgp) + '",\n' +
+        '  worker="' + jsStringEscape(worker) + '";\n' +
+        'eval(pgp);\n' +
+        'if (window.Worker && window.Blob && window.URL) {' +
+          'openpgp.initWorker({' +
+            'path: window.URL.createObjectURL(new Blob([worker],{type: "text/javascript"})),' +
+            'pgpPath: window.URL.createObjectURL(new Blob([pgp],{type: "text/javascript"}))' +
+        '});}}();';
+
+    fs.writeFileSync('dist/openpgp.with-worker.min.js', file);
+  });
+
   // Build tasks
-  grunt.registerTask('default', ['clean', 'copy:zlib', 'browserify', 'replace', 'uglify']);
+  grunt.registerTask('default', ['clean', 'copy:zlib', 'browserify', 'replace', 'uglify', 'include_worker']);
   grunt.registerTask('documentation', ['jsdoc']);
   // Test/Dev tasks
   grunt.registerTask('test', ['jshint', 'jscs', 'mochaTest']);
