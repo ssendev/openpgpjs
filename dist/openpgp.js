@@ -15094,6 +15094,7 @@ var asyncProxy = undefined; // instance of the asyncproxy
 /**
  * Set the path for the web worker script and create an instance of the async proxy
  * @param {String} path     relative path to the worker scripts, default: 'openpgp.worker.js'
+ * @param {String} pgpPath  relative path to OpenPGP.js, default: 'openpgp.js'
  * @param {Object} worker   alternative to path parameter: web worker initialized with 'openpgp.worker.js'
  */
 function initWorker() {
@@ -15101,10 +15102,12 @@ function initWorker() {
 
   var _ref$path = _ref.path;
   var path = _ref$path === undefined ? 'openpgp.worker.js' : _ref$path;
+  var _ref$pgpPath = _ref.pgpPath;
+  var pgpPath = _ref$pgpPath === undefined ? 'openpgp.js' : _ref$pgpPath;
   var worker = _ref.worker;
 
   if (worker || typeof window !== 'undefined' && window.Worker) {
-    asyncProxy = new _async_proxy2.default({ path: path, worker: worker, config: _config2.default });
+    asyncProxy = new _async_proxy2.default({ path: path, pgpPath: pgpPath, worker: worker, config: _config2.default });
     return true;
   }
 }
@@ -20377,6 +20380,7 @@ RANDOM_SEED_REQUEST = 20000; // random bytes seeded after worker request
  * Initializes a new proxy and loads the web worker
  * @constructor
  * @param {String} path     The path to the worker or 'openpgp.worker.js' by default
+ * @param {String} pgpPath  The path to OpenPGP.js or 'openpgp.js' by default
  * @param {Object} config   config The worker configuration
  * @param {Object} worker   alternative to path parameter: web worker initialized with 'openpgp.worker.js'
  * @return {Promise}
@@ -20386,6 +20390,8 @@ function AsyncProxy() {
 
   var _ref$path = _ref.path;
   var path = _ref$path === undefined ? 'openpgp.worker.js' : _ref$path;
+  var _ref$pgpPath = _ref.pgpPath;
+  var pgpPath = _ref$pgpPath === undefined ? 'openpgp.js' : _ref$pgpPath;
   var worker = _ref.worker;
   var config = _ref.config;
 
@@ -20394,6 +20400,7 @@ function AsyncProxy() {
   this.worker.onerror = function (e) {
     throw new Error('Unhandled error in openpgp worker: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
   };
+  this.loadOpenPGP(pgpPath);
   this.seedRandom(INITIAL_RANDOM_SEED);
   // FIFO
   this.tasks = [];
@@ -20423,6 +20430,14 @@ AsyncProxy.prototype.onMessage = function (event) {
     default:
       throw new Error('Unknown Worker Event.');
   }
+};
+
+/**
+ * Send message to worker with url of openpgp.js
+ * @param  {String} url Url of OpenPGP.js
+ */
+AsyncProxy.prototype.loadOpenPGP = function (url) {
+  this.worker.postMessage({ event: 'openpgp-url', url: url });
 };
 
 /**

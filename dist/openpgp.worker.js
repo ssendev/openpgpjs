@@ -20,19 +20,26 @@
 
 self.window = {}; // to make UMD bundles work
 
-importScripts('openpgp.js');
-var openpgp = window.openpgp;
-
 var MIN_SIZE_RANDOM_BUFFER = 40000;
 var MAX_SIZE_RANDOM_BUFFER = 60000;
 
-openpgp.crypto.random.randomBuffer.init(MAX_SIZE_RANDOM_BUFFER);
+var openpgp;
 
 self.onmessage = function (event) {
   var msg = event.data || {},
       options = msg.options || {};
 
   switch (msg.event) {
+    case 'openpgp-url':
+      if (!window.openpgp && msg.url) {
+        var onmessage = self.onmessage;
+        importScripts(msg.url);
+        openpgp = window.openpgp;
+        openpgp.crypto.random.randomBuffer.init(MAX_SIZE_RANDOM_BUFFER);
+        self.onmessage = onmessage;
+      }
+      break;
+
     case 'configure':
       for (var i in msg.config) {
         openpgp.config[i] = msg.config[i];
@@ -67,4 +74,5 @@ function response(event) {
   }
   self.postMessage(event, openpgp.util.getTransferables.call(openpgp.util, event.data));
 }
+
 },{}]},{},[1]);
